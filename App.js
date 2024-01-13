@@ -1,15 +1,27 @@
 import React, { useRef, useState } from "react";
-import { Keyboard, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Keyboard, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image } from 'react-native';
 import api from "./src/services/api";
 
 export default function App() {
-
     const [cep, setCep] = useState('');
     const inputRef = useRef(null);
     const [cepUser, setCepUser] = useState(null);
 
-    async function buscar() {
-        if (cep == '') {
+    function formataCep(value) {
+        // Remove caracteres não numéricos
+        const formatCep = value.replace(/\D/g, '');
+
+        // Adiciona a máscara ao CEP
+        return formatCep.replace(/(\d{5})(\d{3})/, '$1-$2');
+    }
+
+    function handleInputChange(value) {
+        const mascaraCep = formataCep(value);
+        setCep(mascaraCep);
+    }
+
+    async function handleSearch() {
+        if (cep === '') {
             alert('Digite um CEP válido');
             setCep('');
             return;
@@ -18,108 +30,143 @@ export default function App() {
         try {
             const response = await api.get(`/${cep}/json`);
             console.log(response.data);
-            setCepUser(response.data);
-            Keyboard.dismiss();
+
+            if (response.data == true) {
+                setCepUser(response.data);
+                Keyboard.dismiss();
+            } else {
+                alert('CEP não encontrado ou inexistente.');
+                setCep('');
+            }
+
 
         } catch (error) {
-            console.log('ERROR: ' + error);
+            alert('ERROR: ' + error);
         }
     }
 
-    function limpar() {
-        setCep('');
-        setCepUser('');
-        inputRef.current.focus();
-    }
-
     return (
+
         <SafeAreaView style={styles.container}>
 
             <View style={styles.cepBox}>
 
-                <Text style={styles.texto}>Digite o CEP desejado</Text>
+                <Image source={require('./src/assets/logo.png')} style={styles.logo} />
 
-                <TextInput style={styles.input} placeholder='Ex.: 00000-000' value={cep} onChangeText={(texto) => setCep(texto)} keyboardType="numeric" ref={inputRef} />
+                <TextInput style={styles.input} placeholder='Digite o CEP...' value={cep} onChangeText={handleInputChange} keyboardType="numeric" ref={inputRef} />
 
             </View>
 
             <View style={styles.areaBtn}>
 
-                <TouchableOpacity style={[styles.botao, { backgroundColor: '#1d75cd' }]} onPress={buscar}>
+                <TouchableOpacity style={styles.botao} onPress={handleSearch}>
                     <Text style={styles.botaoText}>Buscar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={[styles.botao, { backgroundColor: '#cd3e1d' }]} onPress={limpar}>
-                    <Text style={styles.botaoText}>Limpar</Text>
                 </TouchableOpacity>
 
             </View>
 
             {
-                cepUser &&
+                cepUser && (
 
-                <View style={styles.resultado}>
-                    <Text style={styles.itemText}>{cepUser.cep}</Text>
-                    <Text style={styles.itemText}>{cepUser.logradouro}</Text>
-                    <Text style={styles.itemText}>{cepUser.bairro}</Text>
-                    <Text style={styles.itemText}>{cepUser.localidade}</Text>
-                    <Text style={styles.itemText}>{cepUser.uf}</Text>
-                </View>
-            }
+                    <View style={styles.resultado}>
 
+                        <View>
+
+                            <Text style={{ fontSize: 40, fontWeight: "bold", color: '#ff0000', marginBottom: 10 }}>
+                                {cepUser.cep}
+                            </Text>
+
+                            <View style={styles.item}>
+                                <Text style={styles.label}>Logradouro</Text>
+                                <Text style={styles.itemText}>{cepUser.logradouro}</Text>
+                            </View>
+
+                            <View style={styles.item}>
+                                <Text style={styles.label}>Bairro</Text>
+                                <Text style={styles.itemText}>{cepUser.bairro}</Text>
+                            </View>
+
+                            <View style={styles.item}>
+                                <Text style={styles.label}>Localidade/UF</Text>
+                                <Text style={styles.itemText}>{cepUser.localidade}/{cepUser.uf}</Text>
+                            </View>
+
+                            {cepUser.complemento && (
+                                <View style={styles.item}>
+                                    <Text style={styles.label}>Complemento</Text>
+                                    <Text style={[styles.itemText, { textTransform: 'capitalize' }]}>{cepUser.complemento}</Text>
+                                </View>
+                            )}
+
+
+                        </View>
+
+                    </View>
+                )}
 
         </SafeAreaView>
+
     )
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        justifyContent: 'center',
+        backgroundColor: '#f1f1f1'
+
+    },
+    logo: {
+        width: 290,
+        height: 50,
+        marginBottom: 20
     },
     cepBox: {
         alignItems: 'center'
-    },
-    texto: {
-        marginTop: 25,
-        marginBottom: 15,
-        fontSize: 25,
-        fontWeight: 'bold',
     },
     input: {
         borderWidth: 1,
         borderColor: '#ddd',
         borderRadius: 4,
-        width: '90%',
+        width: '85%',
         padding: 10,
         fontSize: 18,
         backgroundColor: '#fff'
     },
     areaBtn: {
-        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 15,
-        paddingRight: 22,
-        paddingLeft: 22
+        marginTop: 20,
     },
     botao: {
-        width: 140,
+        width: '84%',
         height: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 15,
-        borderRadius: 4
+        borderRadius: 4,
+        backgroundColor: '#ff0000'
     },
     botaoText: {
         color: '#fff',
         fontSize: 18
     },
     resultado: {
-        flex: 1,
+        margin: 32,
+        padding: 25,
+        marginTop: 20,
+        borderRadius: 4,
+        alignItems: 'center',
         justifyContent: 'center',
-        alignItems: 'center'
+        backgroundColor: '#fff'
+    },
+    label: {
+        color: '#000',
+        fontSize: 16,
+        fontWeight: 'bold'
     },
     itemText: {
-        fontSize: 22
+        color: '#000',
+        fontSize: 20,
+        marginBottom: 10
     }
-})
+});
