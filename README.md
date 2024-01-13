@@ -22,6 +22,6 @@ npm start
 
 ## Tecnologias utilizadas:
 
-- JavaScript
-- React Native
-- CLI
+* JavaScript
+* React Native
+* CLI
