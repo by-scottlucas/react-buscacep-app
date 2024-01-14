@@ -31,7 +31,7 @@ export default function App() {
             const response = await api.get(`/${cep}/json`);
             console.log(response.data);
 
-            if (response.data == true) {
+            if (response.data !== false) {
                 setCepUser(response.data);
                 Keyboard.dismiss();
             } else {
@@ -118,13 +118,15 @@ const styles = StyleSheet.create({
     },
     logo: {
         width: 290,
-        height: 50,
+        height: 51,
         marginBottom: 20
     },
     cepBox: {
         alignItems: 'center'
     },
     input: {
+        color: '#000',
+        fontWeight: 'bold',
         borderWidth: 1,
         borderColor: '#ddd',
         borderRadius: 4,
